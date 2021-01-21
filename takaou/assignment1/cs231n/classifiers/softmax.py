@@ -24,7 +24,7 @@ def softmax_loss_naive(W, X, y, reg):
     # Initialize the loss and gradient to zero.
     loss = 0.0
     dW = np.zeros_like(W)
-
+    N=X.shape[0]
     #############################################################################
     # TODO: Compute the softmax loss and its gradient using explicit loops.     #
     # Store the loss in loss and the gradient in dW. If you are not careful     #
@@ -32,9 +32,19 @@ def softmax_loss_naive(W, X, y, reg):
     # regularization!                                                           #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
-
+    scores=X.dot(W)
+    margin=np.exp(scores)
+    margin_sum=np.sum(margin,axis=1).reshape(len(margin),-1)
+    margin=margin/margin_sum
+    for i in range(N):
+      loss-=np.log(margin[i,y[i]])
+    margin[range(N),y]-=1
+    for i in range(N):
+      dW+=X[i].reshape(-1,1).dot(margin[i].reshape(1,-1))
+    loss/=N
+    dW/=N
+    loss+=reg*np.sum(W*W)
+    dW+=reg*2*W
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
     return loss, dW
@@ -57,7 +67,18 @@ def softmax_loss_vectorized(W, X, y, reg):
     # regularization!                                                           #
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    N=X.shape[0]
+    scores=X.dot(W)
+    margin=np.exp(scores)
+    margin_sum=np.sum(margin,axis=1).reshape(len(margin),-1)
+    margin=margin/margin_sum
+    loss-=np.sum(np.log(margin[range(N),y]))
+    margin[range(N),y]-=1
+    dW+=X.T.dot(margin)
+    loss/=N
+    dW/=N
+    loss+=reg*np.sum(W*W)
+    dW+=reg*2*W
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
