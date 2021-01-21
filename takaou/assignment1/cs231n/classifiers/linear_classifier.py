@@ -3,6 +3,7 @@ from __future__ import print_function
 from builtins import range
 from builtins import object
 import numpy as np
+from numpy.core.numeric import indices
 from cs231n.classifiers.linear_svm import *
 from cs231n.classifiers.softmax import *
 from past.builtins import xrange
@@ -41,8 +42,9 @@ class LinearClassifier(object):
         # Run stochastic gradient descent to optimize W
         loss_history = []
         for it in range(num_iters):
-            X_batch = None
-            y_batch = None
+            index=np.random.choice(num_train,num_iters)
+            X_batch = X[index]
+            y_batch = y[index]
 
             #########################################################################
             # TODO:                                                                 #
@@ -71,7 +73,7 @@ class LinearClassifier(object):
             # Update the weights using the gradient and the learning rate.          #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+            self.W-=learning_rate*grad
             pass
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -101,7 +103,8 @@ class LinearClassifier(object):
         # Implement this method. Store the predicted labels in y_pred.            #
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+        scores=X.dot(self.W)
+        y_pred=scores.argmax(axis=1)
         pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
