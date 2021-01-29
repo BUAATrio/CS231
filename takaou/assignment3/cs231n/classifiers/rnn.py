@@ -157,6 +157,8 @@ class CaptioningRNN(object):
         caches.append(cache_)
         if self.cell_type=='rnn':
           h,cache_=rnn_forward(x,h_0,Wx,Wh,b)
+        if self.cell_type=='lstm':
+          h,cache_=lstm_forward(x,h_0,Wx,Wh,b)
         caches.append(cache_)
         scores,cache_=temporal_affine_forward(h,W_vocab,b_vocab)
         caches.append(cache_)
@@ -164,7 +166,10 @@ class CaptioningRNN(object):
         pass
 
         dx,grads['W_vocab'],grads["b_vocab"]=temporal_affine_backward(dx,caches.pop())
-        dx,dh,grads['Wx'],grads['Wh'],grads['b']=rnn_backward(dx,caches.pop())
+        if self.cell_type=='rnn':
+          dx,dh,grads['Wx'],grads['Wh'],grads['b']=rnn_backward(dx,caches.pop())
+        if self.cell_type=='lstm':
+          dx,dh,grads['Wx'],grads['Wh'],grads['b']=lstm_backward(dx,caches.pop())
         grads['W_embed']=word_embedding_backward(dx,caches.pop())
         _,grads['W_proj'],grads['b_proj']=affine_backward(dh,caches.pop())
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -234,8 +239,12 @@ class CaptioningRNN(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         x,_=word_embedding_forward(self._start,W_embed)
         h,_=affine_forward(features,W_proj,b_proj)
+        c=np.zeros_like(h)
         for i in range(max_length):
-          h,_=rnn_step_forward(x,h,Wx,Wh,b)
+          if self.cell_type=='rnn':
+            h,_=rnn_step_forward(x,h,Wx,Wh,b)
+          if self.cell_type=='lstm':
+            h,c,_=lstm_step_forward(x,h,c,Wx,Wh,b)
           scores,_=affine_forward(h,W_vocab,b_vocab)
           captions[:,i]=list(np.argmax(scores,axis = 1))
           x,_=word_embedding_forward(captions[:,i],W_embed)
