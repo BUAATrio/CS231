@@ -8,12 +8,13 @@ import torch.optim as optim
 from torch.utils.data import sampler
 
 import PIL
-
+if torch.cuda.is_available():
+    print(1)
+else:
+    print("error")
 NOISE_DIM = 96
-
 dtype = torch.FloatTensor
-#dtype = torch.cuda.FloatTensor ## UNCOMMENT THIS LINE IF YOU'RE ON A GPU!
-
+dtype = torch.cuda.FloatTensor ## UNCOMMENT THIS LINE IF YOU'RE ON A GPU!
 def sample_noise(batch_size, dim, seed=None):
     """
     Generate a PyTorch Tensor of uniform random noise.
@@ -30,7 +31,9 @@ def sample_noise(batch_size, dim, seed=None):
         torch.manual_seed(seed)
         
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    size=(batch_size,dim)
+    x=torch.Tensor(batch_size,dim).uniform_(-1,1)
+    return x
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -51,7 +54,11 @@ def discriminator(seed=None):
     # HINT: nn.Sequential might be helpful.                                      #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    model=nn.Sequential(nn.Linear(784,256),
+                        nn.LeakyReLU(),
+                        nn.Linear(256,256),
+                        nn.LeakyReLU(),
+                        nn.Linear(256,1))
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -76,7 +83,13 @@ def generator(noise_dim=NOISE_DIM, seed=None):
     # HINT: nn.Sequential might be helpful.                                      #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    model=nn.Sequential(nn.Linear(noise_dim,1024),
+                        nn.ReLU(),
+                        nn.Linear(1024,1024),
+                        nn.ReLU(),
+                        nn.Linear(1024,784),
+                        nn.Tanh()
+                        )
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -117,7 +130,8 @@ def discriminator_loss(logits_real, logits_fake):
     """
     loss = None
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    true_labels = torch.ones(logits_fake.shape[0]).type(dtype)
+    return bce_loss(logits_real,true_labels)+bce_loss(logits_fake,true_labels-1)
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

@@ -4,6 +4,7 @@ import torchvision.transforms as T
 import numpy as np
 from .image_utils import SQUEEZENET_MEAN, SQUEEZENET_STD
 from scipy.ndimage.filters import gaussian_filter1d
+import torch.nn as nn
 
 def compute_saliency_maps(X, y, model):
     """
@@ -33,7 +34,13 @@ def compute_saliency_maps(X, y, model):
     # the gradients with a backward pass.                                        #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    scores=model(X)
+    loss=nn.CrossEntropyLoss()(scores,y)
+    loss.backward()
+    saliency=X.grad.clone()
+    X.grad.data.zero_()
+    saliency=torch.abs(saliency)
+    saliency=saliency.max(1)[0]
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -75,8 +82,18 @@ def make_fooling_image(X, target_y, model):
     # You can print your progress over iterations to check your algorithm.       #
     ##############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
+    for i in range(100):
+        scores=model(X_fooling)
+        _, pred_y = scores.max(dim = 1)
+        if pred_y == target_y:
+            break
+        loss=scores[0,target_y]
+        loss.backward()
+        dX=X_fooling.grad.data
+        dX=learning_rate*dX/torch.sum(dX**2)
+        X_fooling.data+=dX
+        X_fooling.grad.zero_()
+        pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ##############################################################################
@@ -93,7 +110,13 @@ def class_visualization_update_step(img, model, target_y, l2_reg, learning_rate)
     # Be very careful about the signs of elements in your code.            #
     ########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
+    scores = model(img)
+    scores = scores[0, target_y] - l2_reg * torch.norm(img.data)
+    scores.backward()
+    gradients = img.grad.data
+    dx = learning_rate * gradients / torch.norm(gradients)
+    img.data += dx
+    img.grad.zero_()
     pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
